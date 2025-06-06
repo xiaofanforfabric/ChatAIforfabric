@@ -1,5 +1,7 @@
+// AIChatHandler.kt
 package com.xiaofan.chatai
 
+import com.xiaofan.chatai.config.ConfigManager
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
@@ -8,23 +10,25 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
-import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
-import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 object AIChatHandler {
-    const val API_URL = "https://api.deepseek.com/chat/completions"
-    const val API_KEY = "sk-5cb5778e33074392b9dd08a05f90150a" // 建议改为从配置读取
     private val client = OkHttpClient.Builder()
-        .connectTimeout(60, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(ConfigManager.timeoutSeconds.toLong(), TimeUnit.SECONDS)
+        .readTimeout((ConfigManager.timeoutSeconds / 2).toLong(), TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
         .build()
-    val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+
+    private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
     fun processCommand(message: String, source: FabricClientCommandSource) {
+        if (ConfigManager.apiKey.isBlank()) {
+            source.sendError(Text.literal("⚠️ 请先配置API密钥: /ai-config set-key <你的密钥>"))
+            return
+        }
+
         source.sendFeedback(Text.literal("AI正在思考..."))
 
         Thread {
@@ -35,12 +39,7 @@ object AIChatHandler {
                 }
             } catch (e: Exception) {
                 MinecraftClient.getInstance().execute {
-                    val errorMsg = when {
-                        e.message?.contains("401") == true -> "API密钥无效"
-                        e.message?.contains("429") == true -> "请求过于频繁"
-                        else -> "请求失败: ${e.message?.substringBefore("\n")}"
-                    }
-                    source.sendError(Text.literal("⚠️ $errorMsg"))
+                    handleError(e, source)
                 }
             }
         }.start()
@@ -48,54 +47,50 @@ object AIChatHandler {
 
     private fun sendToDeepSeek(prompt: String): String {
         val requestBody = JSONObject().apply {
-            put("model", "deepseek-chat")
+            put("model", ConfigManager.model)
             put("messages", JSONArray().apply {
                 put(JSONObject().apply {
                     put("role", "user")
                     put("content", prompt)
                 })
             })
-            put("temperature", 0.7)
-            put("max_tokens", 500)
+            put("temperature", ConfigManager.temperature)
+            put("max_tokens", ConfigManager.maxTokens)
         }.toString()
 
         val request = Request.Builder()
-            .url(API_URL)
-            .addHeader("Authorization", "Bearer $API_KEY")
+            .url(ConfigManager.apiUrl)
+            .addHeader("Authorization", "Bearer ${ConfigManager.apiKey}")
             .addHeader("Content-Type", "application/json")
-            .addHeader("Accept", "application/json") // 明确要求JSON响应
             .post(requestBody.toRequestBody(JSON_MEDIA_TYPE))
             .build()
 
-        return try {
-            val response = client.newCall(request).execute().use { resp ->
-                if (!resp.isSuccessful) {
-                    val errorBody = resp.body?.string() ?: "无错误详情"
-                    throw IOException("HTTP ${resp.code}: $errorBody")
-                }
-                resp.body?.string()?.also {
-                    // 调试用 - 打印原始响应
-                    println("API原始响应: $it")
-                } ?: throw IOException("空响应")
+        val response = client.newCall(request).execute().use { resp ->
+            if (!resp.isSuccessful) {
+                throw IOException("HTTP ${resp.code}: ${resp.body?.string() ?: "无错误详情"}")
             }
-
-            // 更健壮的JSON解析
-            val json = try {
-                JSONObject(response)
-            } catch (e: JSONException) {
-                throw IOException("无效的JSON响应: ${response.take(200)}...")
-            }
-
-            json.optJSONArray("choices")
-                ?.optJSONObject(0)
-                ?.optJSONObject("message")
-                ?.optString("content")
-                ?: throw IOException("响应格式不符合预期: ${json.toString(2)}")
-
-        } catch (e: SocketTimeoutException) {
-            "⚠️ 请求超时，请检查网络或稍后重试"
-        } catch (e: Exception) {
-            "⚠️ 错误: ${e.message?.substringBefore("\n")}"
+            resp.body?.string() ?: throw IOException("空响应")
         }
+
+        return parseResponse(response)
+    }
+
+    private fun parseResponse(response: String): String {
+        val json = JSONObject(response)
+        return json.optJSONArray("choices")
+            ?.optJSONObject(0)
+            ?.optJSONObject("message")
+            ?.optString("content")
+            ?: throw IOException("响应格式不符合预期: ${json.toString(2)}")
+    }
+
+    private fun handleError(e: Exception, source: FabricClientCommandSource) {
+        val errorMsg = when {
+            e.message?.contains("401") == true -> "API密钥无效"
+            e.message?.contains("429") == true -> "请求过于频繁"
+            e is java.net.SocketTimeoutException -> "请求超时，请稍后重试"
+            else -> "请求失败: ${e.message?.substringBefore("\n")}"
+        }
+        source.sendError(Text.literal("⚠️ $errorMsg"))
     }
 }
