@@ -1,4 +1,3 @@
-// AIChatHandler.kt
 package com.xiaofan.chatai
 
 import com.xiaofan.chatai.config.ConfigManager
@@ -45,18 +44,43 @@ object AIChatHandler {
         }.start()
     }
 
-    private fun sendToDeepSeek(prompt: String): String {
+    fun getMinecraftCommand(prompt: String): String {
         val requestBody = JSONObject().apply {
             put("model", ConfigManager.model)
             put("messages", JSONArray().apply {
                 put(JSONObject().apply {
                     put("role", "user")
-                    put("content", prompt)
+                    put("content", "严格只返回一个有效的Minecraft命令（不带/前缀），" +
+                            "不要任何解释或额外符号。需求：$prompt\n" +
+                            "重要规则：\n" +
+                            "1. 不要包含换行符\\n\n" +
+                            "2. 不要包含反引号\n" +
+                            "3. NBT标签必须用{}包裹")
                 })
             })
-            put("temperature", ConfigManager.temperature)
-            put("max_tokens", ConfigManager.maxTokens)
+            put("temperature", 0.1)
+            put("max_tokens", 50)
         }.toString()
+
+        return sendToDeepSeek(requestBody).trim().removePrefix("/").trim()
+    }
+
+    private fun sendToDeepSeek(prompt: String): String {
+        val requestBody = try {
+            JSONObject().apply {
+                put("model", ConfigManager.model)
+                put("messages", JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("role", "user")
+                        put("content", prompt)
+                    })
+                })
+                put("temperature", ConfigManager.temperature)
+                put("max_tokens", ConfigManager.maxTokens)
+            }.toString()
+        } catch (e: Exception) {
+            throw IOException("Failed to build JSON request: ${e.message}")
+        }
 
         val request = Request.Builder()
             .url(ConfigManager.apiUrl)
@@ -65,23 +89,21 @@ object AIChatHandler {
             .post(requestBody.toRequestBody(JSON_MEDIA_TYPE))
             .build()
 
-        val response = client.newCall(request).execute().use { resp ->
+        return client.newCall(request).execute().use { resp ->
             if (!resp.isSuccessful) {
-                throw IOException("HTTP ${resp.code}: ${resp.body?.string() ?: "无错误详情"}")
+                val errorBody = resp.body?.string() ?: "无错误详情"
+                throw IOException("HTTP ${resp.code}: $errorBody")
             }
-            resp.body?.string() ?: throw IOException("空响应")
+            parseResponse(resp.body?.string() ?: throw IOException("空响应"))
         }
-
-        return parseResponse(response)
     }
 
     private fun parseResponse(response: String): String {
-        val json = JSONObject(response)
-        return json.optJSONArray("choices")
-            ?.optJSONObject(0)
-            ?.optJSONObject("message")
-            ?.optString("content")
-            ?: throw IOException("响应格式不符合预期: ${json.toString(2)}")
+        return JSONObject(response)
+            .getJSONArray("choices")
+            .getJSONObject(0)
+            .getJSONObject("message")
+            .getString("content")
     }
 
     private fun handleError(e: Exception, source: FabricClientCommandSource) {

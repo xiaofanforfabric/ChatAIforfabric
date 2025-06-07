@@ -8,12 +8,12 @@ import com.xiaofan.chatai.config.ConfigManager
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
+import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Style
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 
 object AICommand {
-    // 统一的样式定义
     private val SUCCESS_STYLE = Style.EMPTY.withColor(Formatting.GREEN)
     private val ERROR_STYLE = Style.EMPTY.withColor(Formatting.RED)
     private val INFO_STYLE = Style.EMPTY.withColor(Formatting.BLUE)
@@ -24,6 +24,7 @@ object AICommand {
     fun register() {
         ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
             registerAIChatCommand(dispatcher)
+            registerAICommandCommand(dispatcher)
             registerConfigCommand(dispatcher)
             registerHelpCommand(dispatcher)
         }
@@ -34,7 +35,6 @@ object AICommand {
             ClientCommandManager.literal("ai")
                 .then(ClientCommandManager.argument("message", StringArgumentType.greedyString())
                     .executes { context ->
-                        // 验证API密钥
                         if (ConfigManager.apiKey.isBlank()) {
                             context.source.sendError(
                                 Text.literal("⚠️ 请先配置API密钥: /ai-config set-key <你的密钥>")
@@ -43,7 +43,6 @@ object AICommand {
                             return@executes Command.SINGLE_SUCCESS
                         }
 
-                        // 验证消息长度
                         val message = StringArgumentType.getString(context, "message")
                         if (message.length > 500) {
                             context.source.sendError(
@@ -53,25 +52,78 @@ object AICommand {
                             return@executes Command.SINGLE_SUCCESS
                         }
 
-                        // 发送处理中提示
                         context.source.sendFeedback(
                             Text.literal("⌛ AI正在思考...")
                                 .setStyle(GRAY_STYLE)
                         )
 
-                        // 调用AI处理
                         AIChatHandler.processCommand(message, context.source)
                         Command.SINGLE_SUCCESS
                     }
                 )
                 .executes { context ->
-                    // 显示用法提示
                     context.source.sendFeedback(
                         Text.literal("ℹ️ 使用说明: /ai <你的问题>")
                             .setStyle(INFO_STYLE)
                     )
                     context.source.sendFeedback(
                         Text.literal("例如: /ai 如何在生存模式快速找到钻石")
+                            .setStyle(GRAY_STYLE)
+                    )
+                    Command.SINGLE_SUCCESS
+                }
+        )
+    }
+
+    private fun registerAICommandCommand(dispatcher: CommandDispatcher<FabricClientCommandSource>) {
+        dispatcher.register(
+            ClientCommandManager.literal("ai-command")
+                .then(ClientCommandManager.argument("content", StringArgumentType.greedyString())
+                    .executes { context ->
+                        if (ConfigManager.apiKey.isBlank()) {
+                            context.source.sendError(
+                                Text.literal("⚠️ 请先配置API密钥: /ai-config set-key <你的密钥>")
+                                    .setStyle(ERROR_STYLE)
+                            )
+                            return@executes Command.SINGLE_SUCCESS
+                        }
+
+                        val content = StringArgumentType.getString(context, "content")
+                        context.source.sendFeedback(
+                            Text.literal("⌛ 正在生成命令...")
+                                .setStyle(GRAY_STYLE)
+                        )
+
+                        Thread {
+                            try {
+                                val command = AIChatHandler.getMinecraftCommand(content)
+                                MinecraftClient.getInstance().execute {
+                                    context.source.player.networkHandler.sendChatCommand(command)
+                                    context.source.sendFeedback(
+                                        Text.literal("✅ 已执行命令: /$command")
+                                            .setStyle(SUCCESS_STYLE)
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                MinecraftClient.getInstance().execute {
+                                    context.source.sendError(
+                                        Text.literal("⚠️ 错误: ${e.message}")
+                                            .setStyle(ERROR_STYLE)
+                                    )
+                                }
+                            }
+                        }.start()
+
+                        Command.SINGLE_SUCCESS
+                    }
+                )
+                .executes { context ->
+                    context.source.sendFeedback(
+                        Text.literal("ℹ️ 使用说明: /ai-command <需求>")
+                            .setStyle(INFO_STYLE)
+                    )
+                    context.source.sendFeedback(
+                        Text.literal("例如: /ai-command 给我64个钻石")
                             .setStyle(GRAY_STYLE)
                     )
                     Command.SINGLE_SUCCESS
@@ -165,6 +217,10 @@ object AICommand {
                     )
                     context.source.sendFeedback(
                         Text.literal("/ai <问题> - 向AI提问")
+                            .setStyle(INFO_STYLE)
+                    )
+                    context.source.sendFeedback(
+                        Text.literal("/ai-command <需求> - 生成并执行Minecraft命令")
                             .setStyle(INFO_STYLE)
                     )
                     context.source.sendFeedback(

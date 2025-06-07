@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "chatai",
-	"version": "2.0",
+	"version": "2.1",
 	"name": "chatAI",
 	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [
