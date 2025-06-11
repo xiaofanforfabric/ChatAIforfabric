@@ -8,3 +8,5 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
+
+rootProject.name = 'chatAI' // 你的项目名称
