@@ -1,15 +1,15 @@
 {
 	"schemaVersion": 1,
 	"id": "chatai",
-	"version": "${version}",
+	"version": "3.0-debug",
 	"name": "chatAI",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "这是一个将minecraft接入deepseek的模组，可以在游戏内直接与deepseek聊天，3.0版本还添加了AI玩家，更多有趣玩法在游戏体验。模组作者:xiaofan",
 	"authors": [
-		"Me!"
+		"xiaofan,Deepseek"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/xiaofanforfabric/ChatAIforfabric/",
+		"sources": "https://github.com/xiaofanforfabric/ChatAIforfabric/"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/chatai/icon.png",

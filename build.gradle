@@ -4,6 +4,9 @@ plugins {
 	id "org.jetbrains.kotlin.jvm" version "2.1.21"
 }
 
+
+
+
 version = project.mod_version
 group = project.maven_group
 
@@ -11,16 +14,14 @@ base {
 	archivesName = project.archives_base_name
 }
 
-repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
-}
+
+
+
+
 
 loom {
 	splitEnvironmentSourceSets()
+
 
 	mods {
 		"chatai" {
@@ -28,6 +29,7 @@ loom {
 			sourceSet sourceSets.client
 		}
 	}
+
 
 }
 
@@ -42,7 +44,6 @@ dependencies {
 	minecraft "com.mojang:minecraft:1.20.1"
 	mappings "net.fabricmc:yarn:1.20.1+build.10:v2"
 	modImplementation "net.fabricmc:fabric-loader:0.14.22"
-
 	// Fabric API
 	modImplementation "net.fabricmc.fabric-api:fabric-api:0.88.1+1.20.1"
 	modImplementation "net.fabricmc.fabric-api:fabric-command-api-v2:2.2.0+3cc0f0907d"
@@ -56,11 +57,18 @@ dependencies {
 	// OkHttp网络库
 	modImplementation "com.squareup.okhttp3:okhttp:4.11.0"
 	include "com.squareup.okhttp3:okhttp:4.11.0"
+    modImplementation "com.squareup.okio:okio:3.2.0"
+    include "com.squareup.okio:okio:3.2.0"
+
 
 	// JSON处理
 	implementation 'org.json:json:20231013'
 	include 'org.json:json:20231013'
+
+
 }
+
+
 
 processResources {
 	inputs.property "version", project.version
@@ -114,4 +122,6 @@ publishing {
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
 	}
+}
+compileKotlin {
 }
