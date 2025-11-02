@@ -23,13 +23,17 @@ public class StructureCommand {
                     }
 
                     BlockPos pos = source.getPlayer().getBlockPos();
-                    ChatAIHomeStructure.generate(world, pos, BlockRotation.NONE);
+                    boolean success = ChatAIHomeStructure.generate(world, pos, BlockRotation.NONE);
 
-                    source.sendFeedback(() ->
-                                    Text.literal("已在坐标 " + pos.toShortString() + " 生成结构"),
-                            false
-                    );
-                    return Command.SINGLE_SUCCESS;
+                    if (success) {
+                        source.sendFeedback(() ->
+                                        Text.literal("已在坐标 " + pos.toShortString() + " 生成结构"),
+                                false
+                        );
+                    } else {
+                        source.sendError(Text.literal("结构生成失败！请检查日志获取详细信息。"));
+                    }
+                    return success ? Command.SINGLE_SUCCESS : 0;
                 })
         );
     }

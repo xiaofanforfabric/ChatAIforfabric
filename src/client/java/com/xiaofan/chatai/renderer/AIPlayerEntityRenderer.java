@@ -32,8 +32,8 @@ public class AIPlayerEntityRenderer extends LivingEntityRenderer<LivingEntity, P
         // 强制使用标准玩家模型（Steve）的盔甲
         this.addFeature(new ArmorFeatureRenderer<>(
                 this,
-                new ArmorEntityModel(ctx.getPart(EntityModelLayers.PLAYER_INNER_ARMOR)),
-                new ArmorEntityModel(ctx.getPart(EntityModelLayers.PLAYER_OUTER_ARMOR)),
+                new ArmorEntityModel<LivingEntity>(ctx.getPart(EntityModelLayers.PLAYER_INNER_ARMOR)),
+                new ArmorEntityModel<LivingEntity>(ctx.getPart(EntityModelLayers.PLAYER_OUTER_ARMOR)),
                 ctx.getModelManager()
         ));
 
