@@ -13,7 +13,5 @@ class ChatAI : ModInitializer {
 
 	override fun onInitialize() {
 		LOGGER.info("ChatAI initialized!")
-
-
 	}
 }

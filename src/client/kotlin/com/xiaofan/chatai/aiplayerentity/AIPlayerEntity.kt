@@ -518,14 +518,16 @@ class AIPlayerEntity(
             )
         }
 
-        // 5. 完成重生
+        // 5. 重置行为树为休息状态（让AI在重生后重新评估应该做什么）
+        behaviorTree.resetToIdle()
+
+        // 6. 完成重生
         isRespawning = false
         respawnTimer = -1
         debugLog("Respawn completed at $respawnPos")
 
-        // 6. 打印物品栏状态
+        // 7. 打印物品栏状态
         if (world is ServerWorld) {
-
             debugLog("Inventory after respawn: $inventoryContents")
         }
     }
@@ -805,6 +807,9 @@ class AIPlayerEntity(
         world.server?.playerManager?.broadcast(deathMessage, false)
 
         if (!world.isClient) {
+            // 重置行为树为休息状态
+            behaviorTree.resetToIdle()
+            
             if (keepInventoryOnDeath) {
                 debugLog("Player died but kept inventory")
             } else {

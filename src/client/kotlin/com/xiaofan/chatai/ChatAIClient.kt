@@ -6,6 +6,7 @@ import com.xiaofan.chatai.aiplayerentity.ModEntityAttributes
 import com.xiaofan.chatai.aiplayerentity.ModWorldEvents
 import com.xiaofan.chatai.chataihome.StructureCommand
 import com.xiaofan.chatai.command.AICommand
+import com.xiaofan.chatai.item.ModItems
 import com.xiaofan.chatai.renderer.AIPlayerEntityRenderer
 import com.xiaofan.chatai.servercommand.CommandRegister
 import net.fabricmc.api.ClientModInitializer
@@ -29,6 +30,8 @@ class ChatAIClient : ClientModInitializer {
 		ModEntities.register()
 		ModWorldEvents.register()
 		CommandRegister.register()
+		ModItems.register()
+		LOGGER.info("物品注册成功")
 		LOGGER.info("服务端命令注册成功")
 		EntityRendererRegistry.register(ModEntities.AI_PLAYER) { context ->
 			AIPlayerEntityRenderer(context) // false 表示使用默认宽手臂模型
