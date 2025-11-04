@@ -3,7 +3,6 @@ package com.xiaofan.chatai.aiplayerentity
 import com.mojang.authlib.GameProfile
 import com.xiaofan.chatai.ChatAI
 import com.xiaofan.chatai.aitree.BehaviorTree
-import com.xiaofan.chatai.config.AIPlayerConfig
 import com.xiaofan.chatai.servercommand.AIDebugManager
 import net.minecraft.block.BedBlock
 import net.minecraft.block.Block

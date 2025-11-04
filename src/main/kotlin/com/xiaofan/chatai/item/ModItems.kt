@@ -2,9 +2,7 @@ package com.xiaofan.chatai.item
 
 import com.xiaofan.chatai.ChatAI
 import com.xiaofan.chatai.aiplayerentity.ModEntities
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.minecraft.item.Item
-import net.minecraft.item.ItemGroups
 import net.minecraft.item.ItemStack
 import net.minecraft.item.ItemUsageContext
 import net.minecraft.registry.Registries
@@ -33,7 +31,7 @@ object ModItems {
     )
 
     /**
-     * 注册所有物品
+     * 注册所有物品（服务端）
      */
     fun register() {
         net.minecraft.registry.Registry.register(
@@ -41,15 +39,6 @@ object ModItems {
             Identifier("chatai", "ai_player_spawn_egg"),
             AI_PLAYER_SPAWN_EGG
         )
-        
-        // 将刷怪蛋添加到创造模式的刷怪蛋物品栏
-        try {
-            ItemGroupEvents.modifyEntriesEvent(ItemGroups.SPAWN_EGGS).register { entries ->
-                entries.add(ItemStack(AI_PLAYER_SPAWN_EGG))
-            }
-        } catch (e: Exception) {
-            ChatAI.LOGGER.warn("无法添加到刷怪蛋物品栏，可能API版本不兼容: ${e.message}")
-        }
         
         ChatAI.LOGGER.info("AI玩家刷怪蛋注册成功")
     }

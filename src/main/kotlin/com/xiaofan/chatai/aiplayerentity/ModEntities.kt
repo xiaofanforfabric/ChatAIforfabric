@@ -1,7 +1,5 @@
 package com.xiaofan.chatai.aiplayerentity
 
-import com.xiaofan.chatai.aiplayerentity.ModEntityAttributes.createHostileAttributes
-import net.fabricmc.fabric.api.`object`.builder.v1.entity.FabricDefaultAttributeRegistry
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.SpawnGroup
 import net.minecraft.entity.SpawnReason
@@ -22,10 +20,7 @@ object ModEntities {
         .maxTrackingRange(32)
         .build("chatai:ai_player")
         .apply {
-            // 注册属性
-            FabricDefaultAttributeRegistry.register(this, createHostileAttributes())
-
-            // 修正生成限制（添加Random参数）
+            // 注册生成限制（属性注册在 ChatAI.onInitialize() 中单独处理）
             SpawnRestriction.register(
                 this,
                 SpawnRestriction.Location.ON_GROUND,
