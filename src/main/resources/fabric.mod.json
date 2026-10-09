@@ -11,7 +11,7 @@
 		"homepage": "https://github.com/xiaofanforfabric/ChatAIforfabric/",
 		"sources": "https://github.com/xiaofanforfabric/ChatAIforfabric/"
 	},
-	"license": "CC0-1.0",
+		"license": "LGPL-3.0-only",
 	"icon": "assets/chatai/icon.png",
 	"environment": "*",
 	"entrypoints": {
