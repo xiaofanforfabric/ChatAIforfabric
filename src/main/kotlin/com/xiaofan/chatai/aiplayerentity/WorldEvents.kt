@@ -21,6 +21,8 @@ object ModWorldEvents {
                         null
                     )
                     world.spawnEntity(aiPlayer)
+                    // 注册 AI 玩家到管理器（触发 join message）
+                    AIPlayerManager.registerAIPlayer(aiPlayer, server)
                 }
             }
         }
@@ -30,6 +32,9 @@ object ModWorldEvents {
                 world.iterateEntities()
                     .filterIsInstance<AIPlayerEntity>()
                     .forEach { aiPlayer ->
+                        // 注销 AI 玩家（触发 leave message）
+                        AIPlayerManager.unregisterAIPlayer(aiPlayer, server)
+                        // 保存数据
                         val nbt = NbtCompound()
                         aiPlayer.writeCustomDataToNbt(nbt)
                         AIPlayerData.save(world, aiPlayer.uuid, nbt)

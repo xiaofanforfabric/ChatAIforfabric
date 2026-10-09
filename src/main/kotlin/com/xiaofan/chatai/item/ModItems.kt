@@ -112,6 +112,9 @@ class AIPlayerSpawnEggItem(settings: Settings) : Item(settings) {
             
             // 生成实体
             if (serverWorld.spawnEntity(aiPlayer)) {
+                // 注册 AI 玩家到管理器（触发 "join the game" 消息）
+                com.xiaofan.chatai.aiplayerentity.AIPlayerManager.registerAIPlayer(aiPlayer, serverWorld.server)
+                
                 // 消耗物品（创造模式不消耗）
                 if (player != null && !player.isCreative) {
                     context.stack.decrement(1)
